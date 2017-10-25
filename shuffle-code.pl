@@ -52,13 +52,17 @@ unless ($opts{f} eq 'sgc') { # input an evolved code
 	next unless /[ATCG][ATCG][ATCG]/;
 	chomp;
 	my @data = split;
-	my ($codon, $pos) = ($data[1], $data[0]);
-	$cd_pos{$codon} = $pos;
+#	my ($codon, $pos) = ($data[1], $data[0]);
+	my ($codon, $aa) = ($data[0], $data[1]);
+	$codon_table{$codon} = $aa;
+#	$cd_pos{$codon} = $pos;
     }
 
-    foreach my $codon (sort keys %cd_pos) {
-	my $aa = $aa_sorted[$cd_pos{$codon}-1]; # ordered by aa traits
-	$codon_table{$codon} = $aa;
+#    foreach my $codon (sort keys %cd_pos) {
+#	my $aa = $aa_sorted[$cd_pos{$codon}-1]; # ordered by aa traits
+#	$codon_table{$codon} = $aa;
+    foreach my $codon (sort keys %codon_table) {
+	my $aa = $codon_table{$codon};
 	if ($aa_blocks{$aa}) { 
 	    my $ref = $aa_blocks{$aa};
 	    push @$ref, $codon;
