@@ -97,7 +97,7 @@ foreach my $codon_x (@codons1) {
 my $trial=20;
 my $iteration=200;
 my $B=7;
-my $D=2;
+my $D=24;
 my $N1=64;
 my $N=21;
 #srand(10);
