@@ -9,8 +9,6 @@ use Switch;
 use Inline::Files; # necessary to embed multiple data sets
 use Data::Dumper;
 use Getopt::Std;
-#my $exe, $trial, $iteration, $flag;
-#my $start_time, $elapse_time, $new_E, $t, $T0, $T;
 my %Boltz;
 my $sum_B;
 my %d;
@@ -20,7 +18,7 @@ my %city;
 my @visit;
 my @tsp_len;
 my @tsp_time;
-#my $sum_len, $sum_time, $min_E, $max_E, $temp;
+
 
 my %opts;
 getopts('i:w:', \%opts);
@@ -28,6 +26,7 @@ my (%dist_codon, %dist_aa, %dist_combo, %codon_table);
 my $titv = $opts{i} || 4; # transition:transversion ratio; default 4
 my $wt_codon = $opts{w} || 10; # tune this up to increase the weight for codon distances
 my %transitions = ('A' => 'G', 'G' => 'A', 'C' => 'T', 'T' => 'C');
+#Read in Genetic Code
 while(<GENCODE>) {
     next unless /^[ATCG]/;
     chomp;
@@ -39,14 +38,17 @@ my @amino_acids=sort keys %amino_acids1;
 #print Dumper(\%codon_table); exit;
 open(CODON_FILE, "/Users/oliverattie/codon-path.txt");
 my @codons1;
+#Read in Codons for Genetic Code
 while(<CODON_FILE>){
     chomp;
     push(@codons1,$_);
 }
 close(CODON_FILE);
+#Assign number to each codon in order
 for(my $i=0; $i<@codons1; $i++){
     $CodonNum{$codons1[$i]}=$i;
 }
+#Read in Grantham Matrix
 while(<GRANTHAM>){
     chomp;
     next unless /^[A-Z]/;
@@ -54,126 +56,67 @@ while(<GRANTHAM>){
     $dist_aa{$aa1}{$aa2} = $dist;
 }
 
-#print Dumper(\%dist_aa);
-# Codon distances: could be simplied by 1/2, but okay since only done once
-#my @codons = sort keys %codon_table;
-foreach my $codon_x (@codons1) {
-    foreach my $codon_y (@codons1) {
-	$dist_codon{$codon_x}{$codon_y} = &get_codon_dist($codon_x, $codon_y);
-	$dist_combo{$codon_x}{$codon_y} = &get_combo_dist($codon_x, $codon_y, \%codon_table);
-    }
-}
-my $trial=20;
+#my $trial=20;
+#Number of iterations for simulated annealing
 my $iteration=200;
+#Constants for energy function
 my $B=7;
-my $D=2;
+my $D=24;
+#Number of codons and amino acids
 my $N1=64;
 my $N=21;
-#srand(10);
 
+#Normalize the amino acid distance
 my $maximum=0;
-#my @codons=sort keys %codon_table;
-for(my $codons1=0; $codons1<$N1; $codons1++){
-    for(my $codons2=0; $codons2<$N1; $codons2++){
-#	print $dist_combo{$codons[$codon1]}{$codons[$codon2]}." ".$codons[$codon1]." ".$codons[$codon2]." ".$codon_table{$codons[$codon1]}." ".$codon_table{$codons[$codon2]}."\n";
-	if($dist_codon{$codons1[$codons1]}{$codons1[$codons2]}>$maximum){
-	$maximum=$dist_codon{$codons1[$codons1]}{$codons1[$codons2]};
-	
+for(my $aa1=0; $aa1<$N1; $aa1++){
+    for(my $aa2=0; $aa2<$N1; $aa2++){
+	if($dist_aa{$amino_acids[$aa1]}{$amino_acids[$aa2]}>$maximum){
+	    $maximum=$dist_aa{$amino_acids[$aa1]}{$amino_acids[$aa2]};
 	}
     }
 }
-my $maximum1=0;
-for(my $codon1=0; $codon1<$N; $codon1++){
-    for(my $codon2=0; $codon2<$N; $codon2++){
-	if($dist_combo{$codons1[$codon1]}{$codons1[$codon2]}>$maximum1){
-	    $maximum1=$dist_combo{$codons1[$codon1]}{$codons1[$codon2]};
-	}
-    }
-}
-#my $d_P=2*$maximum+10;
-#my $B=$d_P;
+
 for(my $aa1=0; $aa1<$N; $aa1++){
     for(my $aa2=0; $aa2<$N; $aa2++){
 	$d{$aa1}{$aa2}=$dist_aa{$amino_acids[$aa1]}{$amino_acids[$aa2]}/$maximum;
     }
 }
-for(my $codon1=0; $codon1<$N1; $codon1++){
-    for(my $codon2=0; $codon2<$N1; $codon2++){
-#	if($codon_table{$codons1[$codon1]} eq $codon_table{$codons1[$codon2]}){
-#	    $d_codon{$codon1}{$codon2}=-3/4;
-#	}else{
-	$d_codon{$codon1}{$codon2}=$dist_combo{$codons1[$codon1]}{$codons1[$codon2]}/$maximum1;
-#	}
-    }
-}
-#    $d_Q=0;
-#    for(my $codon2=0; $codon2<$N; $codon2++){
-#	$d_Q+=$d{0}{$codon2}/($N-1);
-#    }
-#	$T_X=$d_P*$d_Q/$d{0}{1};
-#	print $T_X." ";
-#    print "\n";
-
-
-#for($exe=0; $exe<$trial; $exe++){
-#    srand(1);
+#Initialize the V matrix for the Hopfield neural network
     for(my $i=0; $i<$N; $i++){
 	for(my $j=0; $j<$N1; $j++){
 	    $V{$i}{$j}=0.1*rand(1);
 	}
     }
 my $T0=0;
-#for(my $i=1; $i<=75; $i++){
+#Initialize temperature
 $T=$T0=0.6;
-#my $T=$T0=0.6;
-#print "T:".$i."\n";
-#    my $T=$T0=sqrt($d_P*$d_Q/$N);
-#		$T=$T0=1.6;
     while($T>=0.4){
 		my $t=0;
-#		$T=$T0=0.6;
-
 		$T=$T0=$T0/(2**0.33);
 		for(my $k=0; $k<$iteration; $k++){
 		    $t=$t+0.005;
+#Compute the Boltzmann sum from the energy function
 		    for(my $x=0; $x<$N; $x++){
 			$sum_B=0;
 			for(my $i=0; $i<$N1; $i++){
 			$Boltz{$x}{$i}=exp(-del_energy(\%d,\%V,$x,$i)/$T);
 			$sum_B=$sum_B+$Boltz{$x}{$i};
 			}
-		    
+#Update the V-matrix for the Hopfield network
 		    for(my $i=0; $i<$N1; $i++){
 			if($sum_B!=0){
 			$V{$x}{$i}=$Boltz{$x}{$i}/$sum_B;
 			}
-#			print "V:".$V{$x}{$i}." ";
-			
 		    }
-#			print "\n";
 		}
 		
 		    my @visit;
 		    my %output;
 		    my $len=tour(\%d,\%V, \@visit,\%output);
-#		    print "Tour Length:".$len."\n";
-
-#		    print "Stop City X-Coord Y-Coord\n";
-#		    for(my $i=0; $i<$N1; $i++){
-#			my @data=split(/ /, $output{$i});
-#			my $codon_data="";
-#			for(my $j=0; $j<@data; $j++){
-#			    $codon_data.=$codons1[$data[$j]]." ";
-#			}
-#			$neighborref=get_neighbors($codons1[$i]);
-#			$n=@{$neighborref};
-#			print $n."\n";
-#			print $i." ".$codons1[$i]." ".$codons1[$visit[$i]]."  ".$visit[$i]." ".$codon_table{$codons1[$visit[$i]]}." ".$codon_data."\n";
-#		    }
+#Update the temperature
 		$T=$T0/(1.0+$t);
 		    print STDERR $T."\n";
 		}
-
 }
 for(my $i=0; $i<$N; $i++){
     for(my $j=0; $j<$N1; $j++){
@@ -189,72 +132,8 @@ my $len=tour(\%d, \%V, \@visit,\%output);
 print "Tour Length:".$len*$maximum."\n";
 print "Stop Codon Nucleotides Amino Acids\n";
 for(my $i=0; $i<$N1; $i++){
-#    my @data=split(/ /, $output{$i});
-#    my $codon_data="";
-#    for(my $j=0; $j<@data; $j++){
-#    $codon_data.=$codons1[$data[$j]]." ";
-#    }
     print $i." ".$codons1[$i]." ".$visit[$i]." ".$amino_acids[$visit[$i]]." ".$codon_data."\n";
 }
-#}
-#sub transv_dist{
-#    $nuc1=shift;
-#    $nuc2=shift;
-#    $dist=0;
-#    if($nuc1 eq $nuc2){
-#	$dist=0;
-#    }
-#    if((($nuc1 eq "A")&&($nuc2 eq "G"))||(($nuc1 eq "G")&&($nuc2 eq "A"))){
-#	$dist=1;
-#    }
-#    if((($nuc1 eq "C")&&($nuc2 eq "T"))||(($nuc1 eq "T")&&($nuc2 eq "C"))){
-#	$dist=1;
-#    }
-#    if((($nuc1 eq "A")&&($nuc2 eq "C"))||(($nuc1 eq "C")&&($nuc2 eq "A"))){
-#	$dist=4;
-#    }
-#    if((($nuc1 eq "G")&&($nuc2 eq "T"))||(($nuc1 eq "T")&&($nuc2 eq "G"))){
-#	$dist=4;
-#    }
-#    if((($nuc1 eq "A")&&($nuc2 eq "T"))||(($nuc1 eq "T")&&($nuc2 eq "A"))){
-#	$dist=4;
-#    }
-#    if((($nuc1 eq "C")&&($nuc2 eq "G"))||(($nuc1 eq "G")&&($nuc2 eq "C"))){
-#	$dist=4;
-#    }
-#    return $dist;
-#}
-#sub energy{
-#    $dref=shift;
-#    $Vref=shift;
-#    my $term1=0;
-#    my $term2=0;
-#    for(my $i=0; $i<$N; $i++){
-#	for(my $x=0; $x<$N; $x++){
-#	    for(my $y=0; $y<$N; $y++){
-#		if($y!=$x){
-#		    $term1=$term1+$$Vref{$x}{$i}*$$Vref{$y}{$i};
-#		}
-#	    }
-#	}
-#    }
-#	for(my $x=0; $x<$N; $x++){
-#	    for(my $y=0; $y<$N; $y++){
-#		if($y!=$x){
-#		    for(my $i=0; $i<$N; $i++){
-#			switch($i){
-#			    case 0{$term2=$term2+$$dref{$x}{$y}*$$Vref{$x}{$i}*($$Vref{$y}{$i+1}+$$Vref{$y}{$N-1});break;}
-#			    case ($N-1){$term2=$term2+$$dref{$x}{$y}*$$Vref{$x}{$i}*($$Vref{$y}{0}+$$Vref{$y}{$i-1});break;}
-#			  else {$term2=$term2+$$dref{$x}{$y}*$$Vref{$X}{$i}*($$Vref{$y}{$i+1}+$$Vref{$y}{$i-1});break;}
-
-#			}
-#}
-#}
-#}
-#}
-#			return ($B*0.5*$term1+$D*0.5*$term2);
-#}		    
-	
 sub del_energy{
     my $dref=shift;
     my $Vref=shift;
@@ -271,6 +150,8 @@ sub del_energy{
 	if($y!=$x){
 	    my $neighborref=get_neighbors($codons1[$i]);
 	    for(my $k=0; $k<@{$neighborref}; $k++){
+#Traveling salesman problem with neighboring codons instead of cities
+#where neighboring means changing the third letter
 		$term2=$term2+($$dref{$x}{$y})*($$Vref{$y}{$CodonNum{$$neighborref[$k]}});
 
 	    }
@@ -303,68 +184,22 @@ sub tour{
     $len=$len+$$dref{$$visitref[$N-1]}{$$visitref[0]};
     return $len;
 }
+#Given a codon,returns a reference to an array of three codons, all three
+#possibilities with the third letter of the original codon changed.
 sub get_neighbors{
     my $source=shift;
     my ($first,$second,$third)=split //, $source;
     my @neighbors;
     my @raw_bases=qw(A T C G);
     my %transition=("A"=>"G", "G"=>"A", "C"=>"T", "T"=>"C");
-#    foreach my $rawbase(@raw_bases){
-#	next if $rawbase eq $first;
-#	my $ti=($transition{$first} eq $rawbase)?1:0;
-#	if($ti){
-#	push (@neighbors,$rawbase.$second.$third);
-#	    'codon'=>$rawbase.$second.$third,
-#	    'ti'=>$ti,
-#	}
-#    }
-#    foreach my $rawbase(@raw_bases){
-#        next if $rawbase eq $second;
-#	my $ti=($transition{$second} eq $rawbase)?1:0;
-#	if($ti){
-#        push (@neighbors,$first.$rawbase.$third);
-#	    'codon'=>$first.$rawbase.$third,
-#	    'ti'=>$ti,
-#	}
-#    }
     foreach my $rawbase(@raw_bases){
 	next if $rawbase eq $third;
 	my $ti=($transition{$third} eq $rawbase)?1:0;
-#	print $rawbase." ".$ti."\n";
-#	if($ti){
 	    push(@neighbors, $first.$second.$rawbase);
-#	}
     }
 
     return \@neighbors;
 }
-sub get_combo_dist {
-    my ($x, $y, $ref) = @_;
-    my $dist_codon_pairs = $dist_codon{$x}{$y}; # this is too small (overwhelmed) compared with Gramtham distance below; perhaps add a weight to equlize the two effects (mutation disttance & AA distance)?
-    my $dist_aa_pairs = $dist_aa{$ref->{$x}}{$ref->{$y}};
-#    return [ ($dist_codon_pairs, $dist_aa_pairs) ];
-    return $wt_codon * $dist_codon_pairs + $dist_aa_pairs;
-}
-
-sub get_codon_dist {
-    my ($x, $y) = @_;
-    return 0 if $x eq $y;
-    my @bases_x = split //, $x;
-    my @bases_y = split //, $y;
-    my $sum = 0;
-    for(my $i=0; $i<=2; $i++) {
-	next if $bases_x[$i] eq $bases_y[$i];
-	if($i==0){
-	$sum += 25*$transitions{$bases_x[$i]} eq $bases_y[$i] ? 1 : $titv;
-	}if($i==1){
-	    $sum+=50*$transitions{$bases_x[$i]} eq $bases_y[$i] ? 1 : $titv;
-	}if($i==2){
-	    $sum+=$transitions{$bases_x[$i]} eq $bases_y[$i] ? 1 : $titv;
-	}
-    }
-    return $sum;
-}
-
 
 # Standard genetic code ("X" for stop codon)
 __GENCODE__
