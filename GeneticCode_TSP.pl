@@ -13,85 +13,88 @@ my @tsp_len;
 my @tsp_time;
 my $sum_len, $sum_time, $min_E, $max_E, $temp;
 $trial=20;
-$iteration=1000;
+$iteration=200;
 my $B=7;
 my $D=2;
-my $N=50;
+my $N=64;
 srand(10);
 my @codons;
 my %codon;
-$codons[0]="GGG";
-$codons[1]="GGA";
-$codons[2]="GGT";
-$codons[3]="GGC";
-$codons[4]="GAG";
+$codons[0]="GGG";     
+$codons[1]="GGA";     
+$codons[2]="GGT";     
+$codons[3]="GGC";     
+$codons[4]="GAG"; 
 $codons[5]="GAA";
-$codons[6]="GAT";
+$codons[6]="GAT"; 
 $codons[7]="GAC";
 $codons[8]="GTG";
-$codons[9]="GTA";
-$codons[10]="GTT";
+$codons[9]="GTA"; 
+$codons[10]="GTT"; 
 $codons[11]="GTC";
 $codons[12]="GCG";
 $codons[13]="GCA";
-$codons[14]="GCT";
-$codons[15]="GCC";
+$codons[14]="GCT"; 
+$codons[15]="GCC";     
 $codons[16]="AGG";
-$codons[17]="AGA";
-$codons[18]="AGC";
-$codons[19]="AAG";
-$codons[20]="AAA";
-$codons[21]="AAT";
-$codons[22]="AAC";
-$codons[23]="ATG";
-$codons[24]="ATA";
-$codons[25]="ATT";
-$codons[26]="ATC";
-$codons[27]="ACG";
-$codons[28]="ACA";
-$codons[29]="ACT";
-$codons[30]="ACC";
-$codons[31]="TGG";
-$codons[32]="TGA";
-$codons[33]="TGT";
-$codons[34]="TGC";
-$codons[35]="TAG";
-$codons[36]="TAA";
-$codons[37]="TAT";
-$codons[38]="TAC";
-$codons[39]="TTG";
-$codons[40]="TTA";
-$codons[41]="TTT";
-$codons[42]="TTC";
-$codons[43]="TCG";
-$codons[44]="TCA";
-$codons[45]="TCT";
-$codons[46]="TCC";
-$codons[47]="CGG";
-$codons[48]="CGA";
-$codons[49]="CGT";
+$codons[17]="AGA";    
+$codons[18]="AGT";  
+$codons[19]="AGC";
+$codons[20]="AAG";  
+$codons[21]="AAA";    
+$codons[22]="AAT";
+$codons[23]="AAC"; 
+$codons[24]="ATG";
+$codons[25]="ATA";
+$codons[26]="ATT";
+$codons[27]="ATC";
+$codons[28]="ACG"; 
+$codons[29]="ACA";
+$codons[30]="ACT";
+$codons[31]="ACC";
+$codons[32]="TGG"; 
+$codons[33]="TGA"; 
+$codons[34]="TGT"; 
+$codons[35]="TGC";  
+$codons[36]="TAG";     
+$codons[37]="TAA"; 
+$codons[38]="TAT";
+$codons[39]="TAC";
+$codons[40]="TTG";
+$codons[41]="TTA"; 
+$codons[42]="TTT";
+$codons[43]="TTC";
+$codons[44]="TCG";
+$codons[45]="TCA";
+$codons[46]="TCT";
+$codons[47]="TCC";
+$codons[48]="CGG";
+$codons[49]="CGA";
+$codons[50]="CGT";
+$codons[51]="CGC";
+$codons[52]="CAG";
+$codons[53]="CAA";
+$codons[54]="CAT";
+$codons[55]="CAC";
+$codons[56]="CTG";
+$codons[57]="CTA";
+$codons[58]="CTT";
+$codons[59]="CTC";
+$codons[60]="CCG";
+$codons[61]="CCA";
+$codons[62]="CCT"; 
+$codons[63]="CCC"; 
 for(my $i=0; $i<$N; $i++){
     $codon{$i}{0}=substr($codons[$i],0,1);
     $codon{$i}{1}=substr($codons[$i],1,1);
     $codon{$i}{2}=substr($codons[$i],2,1);
 }
-#    print "City ".$i." ".$city{$i}{0}." ".$city{$i}{1}."\n";
-#    $flag=1;
-
-#	for(my $j=0; $j<$i; $j++){
-#	    if($city{$j}{0}==$city{$i}{0}&&$city{$j}{1}==$city{$i}{1}){
-#	    $city{$i}{0}=int(rand(1))*(3.0);
-#	    $city{$i}{1}=int(rand(1))*(1.6);
-#	    break;
-#	}
-#    }
-#}
 
 for(my $i=0; $i<$N; $i++){
     for(my $j=$i+1; $j<$N; $j++){
 	$distance{$i}{$j}=sqrt(transv_dist($codon{$i}{0},$codon{$j}{0})*transv_dist($codon{$i}{0},$codon{$j}{0})+transv_dist($codon{$i}{1},$codon{$j}{1})*transv_dist($codon{$i}{1},$codon{$j}{1})+transv_dist($codon{$i}{2},$codon{$i}{2})*transv_dist($codon{$i}{2},$codon{$j}{2}));
 	$distance{$j}{$i}=$distance{$i}{$j};
-	print "Distances:".$i." ".$j." ".$distance{$i}{$j}."\n";
+#	print "Distances:".$i." ".$j." ".$distance{$i}{$j}."\n";
     }
 }
 $maximum=0;
@@ -114,12 +117,12 @@ for(my $codon1=0; $codon1<$N; $codon1++){
 	    $V{$i}{$j}=0.1*rand(1);
 	}
     }
-    $T=$T0=1.6;
-    while($T>=0.0001){
+    $T=$T0=0.6;
+    while($T>=0.4){
 		$t=0;
 		$T=$T0=$T0/(2**0.33);
 		for(my $k=0; $k<$iteration; $k++){
-		    $t=$t+0.001;
+		    $t=$t+0.005;
 		    for(my $x=0; $x<$N; $x++){
 			$sum_B=0;
 			for(my $i=0; $i<$N; $i++){
@@ -142,9 +145,9 @@ for(my $codon1=0; $codon1<$N; $codon1++){
 		    $len=tour(\%d,\%V, \@visit);
 #		    print "Tour Length:".$len."\n";
 #		    print "Stop City X-Coord Y-Coord\n";
-#		    for(my $i=0; $i<$N; $i++){
-#			print $i." ".$visit[$i]." ".$codon{$visit[$i]}{0}.$codon{$visit[$i]}{1}.$codon{$visit[$i]}{2}."\n";
-#		    }
+		    for(my $i=0; $i<$N; $i++){
+			print $i." ".$visit[$i]." ".$codon{$visit[$i]}{0}.$codon{$visit[$i]}{1}.$codon{$visit[$i]}{2}."\n";
+		    }
 		$T=$T0/(1.0+$t);
 		    print STDERR $T."\n";
 		}
