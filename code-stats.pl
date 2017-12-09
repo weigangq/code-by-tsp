@@ -22,7 +22,7 @@ my $start = $opts{b} || 'TTT';
 my $panelty_1st = $opts{q} || 50; # relative to 3rd position
 my $panelty_2nd = $opts{w} || 100;
 my %transitions = ('A' => 'G', 'G' => 'A', 'C' => 'T', 'T' => 'C');
-my %transversions = ('A' => 'TC', 'G' => 'TC', 'C' => 'AG', 'T' => 'AG');
+my %transversions = ('A' => 'CT', 'G' => 'CT', 'C' => 'GA', 'T' => 'GA'); # this determines path order
 my %nt_pos = ('T' => 1, 'C' => 2,  'A' => 3,  'G' => 4);
 my %pos_nt = (1 => 'T', 2 => 'C',  3 => 'A',  4 => 'G');
 
