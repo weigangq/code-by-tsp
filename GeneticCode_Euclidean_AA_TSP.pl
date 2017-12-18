@@ -148,7 +148,7 @@ my $len=tour(\%d, \%V, \@visit);
 print "Tour Length:".$len*$maximum."\n";
 print "Stop Codon Nucleotides Amino Acids\n";
 for(my $i=0; $i<$N; $i++){
-    my @codons=keys(%{$Codon_Path{$visit[$i]}});
+    my @codons=keys(%{$Codon_Path{$visit[$i]+1}});
     for(my $j=0; $j<@codons; $j++){
     print $i." ".$visit[$i]." ".$codons[$j]." ".$amino_acids[$visit[$i]]."\n";
 }
